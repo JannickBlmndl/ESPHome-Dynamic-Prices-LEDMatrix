@@ -1,0 +1,5 @@
+Language: C
+BasedOnStyle: LLVM
+BreakBeforeBraces: Allman
+SortIncludes: false
+ColumnLimit: 100

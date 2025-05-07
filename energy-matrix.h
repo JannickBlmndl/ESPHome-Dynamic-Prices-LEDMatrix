@@ -1,9 +1,10 @@
-
 // to do
-// get multiple values of home assistnat and map to matrix  matrixShowTibber
+// get multiple values of home assistant and map to matrix like matrixShowTibber
 // https://esphome.io/api/classesphome_1_1display_1_1_display.html#a41d1f952fd82df8dcd09b7fd9a92df66
-#include "Preferences.h"
+// https://github.com/Till-83/Tibber_Price_Monitor/tree/02744018b3ae67c152b2b9c5a669c9e4ff36c838
 #include "esphome.h"
+
+#define TEST
 
 // Define the PRICE_CAT enum
 enum PRICE_CAT
@@ -20,7 +21,7 @@ struct PriceCat_t
 {
   PRICE_CAT category;
   Color color;
-  float lowLim;
+  double lowLim;
 };
 
 // Prices category, colors and limit
@@ -32,65 +33,12 @@ PriceCat_t priceCats[] = {
     {VERY_EXPENSIVE, Color(0xFF0000), 0.50} // Red
 };
 
-// Global functions to save and retrieve values from NVM, to survive a reboot
-void SaveValueToNvm(String key, double value)
-{
-  ESP_LOGD((String("SaveValueToNvm : ") + key).c_str(), String(value).c_str());
-  Preferences preferences;                   // Create an instance of the preferences library
-  preferences.begin("my_partition", false);  // Open the preferences partition
-  preferences.putDouble(key.c_str(), value); // Write the value to preferences
-  preferences.end();
-}
-
-void SaveStringToNvm(String key, String value)
-{
-  ESP_LOGD((String("SaveStringToNvm : ") + key).c_str(), value.c_str());
-  Preferences preferences;                   // Create an instance of the preferences library
-  preferences.begin("my_partition", false);  // Open the preferences partition
-  preferences.putString(key.c_str(), value); // Write the value to preferences
-  preferences.end();
-}
-
-double LoadValueFromNvm(String key)
-{
-  Preferences preferences;                  // Create an instance of the preferences library
-  preferences.begin("my_partition", false); // Open the preferences partition
-  double value = preferences.getDouble(key.c_str(), 42); // Read the value from preferences
-  preferences.end();
-  ESP_LOGD((String("LoadValueFromNvm : ") + key).c_str(), String(value).c_str());
-  return value;
-}
-
-String LoadStringFromNvm(String key)
-{
-  Preferences preferences;                  // Create an instance of the preferences library
-  preferences.begin("my_partition", false); // Open the preferences partition
-  String value = preferences.getString(key.c_str(), ""); // Read the value from preferences
-  preferences.end();
-  ESP_LOGD((String("LoadStringFromNvm : ") + key).c_str(), value.c_str());
-  return value;
-}
-
 // Global variables. Needed to retain values after reboot
 // double currentPower;
 // double dailyEnergy;
 double currentPrice;
 double todayMaxPrice;
 String TodaysPrices;
-
-void SaveValuesToNVM()
-{
-  // if (currentPower != 0)
-  //   SaveValueToNvm("CurrentPower", currentPower);
-  // if (dailyEnergy != 0)
-  //   SaveValueToNvm("DailyEnergy", dailyEnergy);
-  if (currentPrice != 0)
-    SaveValueToNvm("CurrentPrice", currentPrice);
-  if (todayMaxPrice != 0)
-    SaveValueToNvm("TodayMaxPrice", todayMaxPrice);
-  if (TodaysPrices != "")
-    SaveStringToNvm("TodaysPrices", TodaysPrices);
-}
 
 // EnergyMatrix class:
 class EnergyMatrix : public Component
@@ -108,15 +56,18 @@ public:
   // Test to draw a rectangle
   void testRectangle(display::Display *buff, int x, int y, int width, int height)
   {
-    // Color color = Color(0x00FF00);
-    if (1)
+    Color color;
+    
+    color = Color(0xFF0000); // Test red
+    if (1) // arbirary if statement
     {
-      // test with cat EXPENSIVE yellow
-      Color color = getPriceColour(priceCats[EXPENSIVE].lowLim);
+      // Test rectangle with color matching price category EXPENSIVE 
+      // Color color = getPriceColour(priceCats[EXPENSIVE].lowLim);
       buff->rectangle(x, y, width, height, color);
     }
   }
 
+  #ifndef TEST
   // void CreateGraph(display::Display *buff, int x, int y, int width, int height,
   //                  Color color = COLOR_ON)
   // {
@@ -202,10 +153,10 @@ public:
   // Display current power usage
   void WritePowerText(display::Display *buff, int x, int y)
   {
-    if (isnan(currentPower) || currentPower == 0)
-      currentPower = LoadValueFromNvm("CurrentPower");
-    if (isnan(currentPrice) || currentPrice == 0)
-      currentPrice = LoadValueFromNvm("CurrentPrice");
+    // if (isnan(currentPower) || currentPower == 0)
+    //   currentPower = LoadValueFromNvm("CurrentPower");
+    // if (isnan(currentPrice) || currentPrice == 0)
+    //   currentPrice = LoadValueFromNvm("CurrentPrice");
     buff->printf(x, y, &id(large_text), PriceColour(currentPrice), TextAlign::BASELINE_CENTER,
                  "%.0f W", currentPower);
   }
@@ -213,8 +164,8 @@ public:
   void WritePriceText(display::Display *buff, int x, int y)
   {
 
-    if (isnan(currentPrice) || currentPrice == 0)
-      currentPrice = LoadValueFromNvm("CurrentPrice");
+    // if (isnan(currentPrice) || currentPrice == 0)
+    //   currentPrice = LoadValueFromNvm("CurrentPrice");
 
     // print price
     buff->printf(120, 257, &id(price_text), COLOR_CSS_WHITESMOKE, TextAlign::BASELINE_CENTER,
@@ -276,20 +227,62 @@ public:
   // }
 
   // Draw the graph
-  void DrawPriceGraph(display::Display *buff)
-  {
-    double lastprice = 0;
-    double price;
+  // void DrawPriceGraph(display::Display *buff)
+  // {
+  //   double lastprice = 0;
+  //   double price;
 
-    for (int priceCount = 0; priceCount < 24; priceCount++)
+  //   for (int priceCount = 0; priceCount < 24; priceCount++)
+  //   {
+  //     price = priceArray[priceCount];
+  //     lastprice = AddPrice(buff, priceCount, price, priceCount - 1, lastprice);
+  //   }
+  //   // Add last piece if we know the price at midninght tomorrow
+  //   price = priceArrayTomorrow[0];
+  //   if (price > 0)
+  //     lastprice = AddPrice(buff, 24, price, 23, lastprice);
+  // }
+
+  // display 8x8 prices visual
+  void drawPrice(display::Display *buff)
+  {
+    int lastheight = 0;
+    int height;
+
+    for (int i = 0; i < 8; i++)
     {
-      price = priceArray[priceCount];
-      lastprice = AddPrice(buff, priceCount, price, priceCount - 1, lastprice);
+      if (!PRICES.price[i].isNull)
+      {
+        // Calculate the height of the bar
+        if (PRICES.maximumPrice == PRICES.minimumPrice)
+        {
+          height = 1; // Avoid division by zero
+        }
+        else
+        {
+          height = (int)(8 * (priceArray[i] - PRICES.minimumPrice) /
+                         (PRICES.maximumPrice - PRICES.minimumPrice));
+          height++;
+        }
+  
+        // Constrain height to matrix bounds
+        if (height > 8)
+        {
+          height = 8;
+        }
+  
+        // // Debugging output
+        // Serial.println(PRICES.price[i].price);
+        // Serial.println(PRICES.price[i].level);
+        // Serial.println(i);
+        // Serial.println(height);
+  
+        if (i != 0 || firstBlink) // Draw if ready for display
+        {
+          drawMatrixLine(buff, i, height, colors[PRICES.price[i].level]);
+        }
+      }
     }
-    // Add last piece if we know the price at midninght tomorrow
-    price = priceArrayTomorrow[0];
-    if (price > 0)
-      lastprice = AddPrice(buff, 24, price, 23, lastprice);
   }
 
   // Deserialize the JSON string from NordPool
@@ -299,8 +292,8 @@ public:
     String array[25];
     int r = 0, t = 0;
 
-    if (TodaysPrices == "")
-      TodaysPrices = LoadStringFromNvm("TodaysPrices");
+    // if (TodaysPrices == "")
+    //   TodaysPrices = LoadStringFromNvm("TodaysPrices");
 
     if (day == "tomorrow")
       prices = TomorrowsPrices;
@@ -332,6 +325,7 @@ public:
         priceArray[k] = array[k].toFloat();
     }
   }
+    #endif // TEST
 
 private:
   display::Display *vbuff;
@@ -352,56 +346,57 @@ private:
 
   void drawMatrixLine(display::Display *buff, int column, int height, Color color = COLOR_ON)
   {
-    buff->line(column, height, color);
+    buff->line(column, 0, column, height, color);
   }
 
-  void DrawGraphLine(display::Display *buff, double x1, double x2, double y1, double y2,
-                     Color color = COLOR_ON)
-  {
-    buff->line(xPos + x1 * xFactor, yPos + graphHeight - (y1 * yFactor), xPos + x2 * xFactor,
-               yPos + graphHeight - (y2 * yFactor), color);
-    buff->line(xPos + x1 * xFactor, yPos + 1 + graphHeight - (y1 * yFactor), xPos + x2 * xFactor,
-               yPos + 1 + graphHeight - (y2 * yFactor), color);
-    buff->line(xPos + x1 * xFactor, yPos + 2 + graphHeight - (y1 * yFactor), xPos + x2 * xFactor,
-               yPos + 2 + graphHeight - (y2 * yFactor), color);
-    //		ESP_LOGD("GraphGrid x1: ", String(xPos + x1*xFactor).c_str());
-  }
+  // void DrawGraphLine(display::Display *buff, double x1, double x2, double y1, double y2,
+  //                    Color color = COLOR_ON)
+  // {
+  //   buff->line(xPos + x1 * xFactor, yPos + graphHeight - (y1 * yFactor), xPos + x2 * xFactor,
+  //              yPos + graphHeight - (y2 * yFactor), color);
+  //   buff->line(xPos + x1 * xFactor, yPos + 1 + graphHeight - (y1 * yFactor), xPos + x2 * xFactor,
+  //              yPos + 1 + graphHeight - (y2 * yFactor), color);
+  //   buff->line(xPos + x1 * xFactor, yPos + 2 + graphHeight - (y1 * yFactor), xPos + x2 * xFactor,
+  //              yPos + 2 + graphHeight - (y2 * yFactor), color);
+  //   //		ESP_LOGD("GraphGrid x1: ", String(xPos + x1*xFactor).c_str());
+  // }
 
+  #ifndef TEST
   double AddPrice(display::Display *buff, int hour, double price, int lastHour, double lastPrice)
   {
     if (lastHour < 0)
       lastHour = 0;
     if (lastPrice == 0)
       lastPrice = price;
-    DrawGraphLine(buff, lastHour, hour, lastPrice, price, PriceColour(lastPrice)); // matrix line
+    DrawGraphLine(buff, lastHour, hour, lastPrice, price, getPriceColour(lastPrice)); // matrix line
 
     return price;
   }
+    #endif // TEST
 
-  // return Colour matching with prices
-  Color getPriceColour(float nNewPrice)
-  {
-    const int numOfCats = sizeof(priceCats) / sizeof(priceCats[0]);
-
-    for (int i = 0; i < numOfCats; i++) // iterate through all cats
-    {
-      PRICE_CAT category = priceCats[i].category;
-
-      if (category == VERY_CHEAP) // Lowest price cat
-      {
-        if (inRange(currentPrice, -10, priceCats[i].lowLim))
-          return priceCats[i].color;
+  // Return Colour matching with prices
+  Color getPriceColour(double nNewPrice) {
+      const int numOfCats = sizeof(priceCats) / sizeof(priceCats[0]);
+  
+      for (int i = 0; i < numOfCats; i++) { // Iterate through all categories
+          PRICE_CAT category = priceCats[i].category;
+  
+          if (category == VERY_CHEAP) { // Lowest price category
+              if (inRange(currentPrice, -10, priceCats[i].lowLim))
+                  return priceCats[i].color;
+          } else if (category == VERY_EXPENSIVE) { // Highest price category
+              if (inRange(currentPrice, priceCats[i].lowLim, 10))
+                  return priceCats[i].color;
+          } else if (inRange(nNewPrice, priceCats[i].lowLim, priceCats[i + 1].lowLim)) {
+              return priceCats[i].color;
+          }
       }
-      else if (category == VERY_EXPENSIVE) // Highest price cat
-      {
-        if (inRange(currentPrice, priceCats[i].lowLim, 10))
-          return priceCats[i].color;
-      }
-      else if (inRange(nNewPrice, priceCats[i].lowLim, priceCats[i + 1].lowLim))
-        return priceCats[i].color;
-      else
-        ESP_LOGD((String("No color matching with price:") + nNewPrice).c_str());
-    }
+  
+      // Log a warning if no matching color is found
+      ESP_LOGD("EnergyMatrix", "No color matching with price: %f", nNewPrice);
+  
+      // Default return value if no match is found
+      return COLOR_OFF; // Replace with a suitable default color
   }
 
   bool inRange(float val, float minimum, float maximum)
