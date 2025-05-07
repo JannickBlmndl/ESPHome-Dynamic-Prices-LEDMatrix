@@ -9,7 +9,8 @@
 			"*.bak": "cpp",
 			"complex": "cpp",
 			"valarray": "cpp",
-			"chrono": "cpp"
+			"chrono": "cpp",
+			"ios": "cpp"
 		}
 	}
 }

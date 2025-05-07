@@ -24,7 +24,7 @@ struct PriceCat_t
   double lowLim;
 };
 
-// Prices category, colors and limit
+// Prices category, colors and lower boundary
 PriceCat_t priceCats[] = {
     {VERY_CHEAP, Color(0x00FF00), 0},       // Green
     {CHEAP, Color(0x55AA00), 0.10},         // Light Green
@@ -57,17 +57,15 @@ public:
   void testRectangle(display::Display *buff, int x, int y, int width, int height)
   {
     Color color;
-    
-    color = Color(0xFF0000); // Test red
     if (1) // arbirary if statement
     {
-      // Test rectangle with color matching price category EXPENSIVE 
-      // Color color = getPriceColour(priceCats[EXPENSIVE].lowLim);
+      // Test rectangle with color matching price category VERY_CHEAP (green)
+      color = getPriceColour(priceCats[VERY_CHEAP].lowLim);
       buff->rectangle(x, y, width, height, color);
     }
   }
 
-  #ifndef TEST
+#ifndef TEST
   // void CreateGraph(display::Display *buff, int x, int y, int width, int height,
   //                  Color color = COLOR_ON)
   // {
@@ -264,19 +262,19 @@ public:
                          (PRICES.maximumPrice - PRICES.minimumPrice));
           height++;
         }
-  
+
         // Constrain height to matrix bounds
         if (height > 8)
         {
           height = 8;
         }
-  
+
         // // Debugging output
         // Serial.println(PRICES.price[i].price);
         // Serial.println(PRICES.price[i].level);
         // Serial.println(i);
         // Serial.println(height);
-  
+
         if (i != 0 || firstBlink) // Draw if ready for display
         {
           drawMatrixLine(buff, i, height, colors[PRICES.price[i].level]);
@@ -325,7 +323,7 @@ public:
         priceArray[k] = array[k].toFloat();
     }
   }
-    #endif // TEST
+#endif // TEST
 
 private:
   display::Display *vbuff;
@@ -361,7 +359,7 @@ private:
   //   //		ESP_LOGD("GraphGrid x1: ", String(xPos + x1*xFactor).c_str());
   // }
 
-  #ifndef TEST
+#ifndef TEST
   double AddPrice(display::Display *buff, int hour, double price, int lastHour, double lastPrice)
   {
     if (lastHour < 0)
@@ -372,36 +370,35 @@ private:
 
     return price;
   }
-    #endif // TEST
+#endif // TEST
 
   // Return Colour matching with prices
-  Color getPriceColour(double nNewPrice) {
-      const int numOfCats = sizeof(priceCats) / sizeof(priceCats[0]);
-  
-      for (int i = 0; i < numOfCats; i++) { // Iterate through all categories
-          PRICE_CAT category = priceCats[i].category;
-  
-          if (category == VERY_CHEAP) { // Lowest price category
-              if (inRange(currentPrice, -10, priceCats[i].lowLim))
-                  return priceCats[i].color;
-          } else if (category == VERY_EXPENSIVE) { // Highest price category
-              if (inRange(currentPrice, priceCats[i].lowLim, 10))
-                  return priceCats[i].color;
-          } else if (inRange(nNewPrice, priceCats[i].lowLim, priceCats[i + 1].lowLim)) {
-              return priceCats[i].color;
-          }
-      }
-  
-      // Log a warning if no matching color is found
-      ESP_LOGD("EnergyMatrix", "No color matching with price: %f", nNewPrice);
-  
-      // Default return value if no match is found
-      return COLOR_OFF; // Replace with a suitable default color
-  }
-
-  bool inRange(float val, float minimum, float maximum)
+  Color getPriceColour(double price)
   {
-    return ((minimum <= val) && (val <= maximum));
+    const int numOfCats = sizeof(priceCats) / sizeof(priceCats[0]);
+
+    for (int i = 0; i < numOfCats; i++)
+    {
+      // If it's the last category, check if the price is above the lower limit
+      if (i == numOfCats - 1)
+      {
+        if (price >= priceCats[i].lowLim)
+        {
+          return priceCats[i].color;
+        }
+      }
+      // For other categories, check if the price is within the range
+      else if (price >= priceCats[i].lowLim && price < priceCats[i + 1].lowLim)
+      {
+        return priceCats[i].color;
+      }
+    }
+
+    // Log a warning if no matching color is found
+    ESP_LOGD("EnergyMatrix", "No color matching with price: %f", price);
+
+    // Default return value if no match is found
+    return COLOR_OFF; // Replace with a suitable default color
   }
 
 }; // class
