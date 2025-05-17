@@ -26,11 +26,17 @@ struct PriceCat_t
 
 // Prices category, colors and lower boundary
 PriceCat_t priceCats[] = {
-    {VERY_CHEAP, Color(0x00FF00), 0.00},    // Green
-    {CHEAP, Color(0x55AA00), 0.10},         // Light Green
-    {NORMAL, Color(0x698C00), 0.20},        // Yellowish Green
-    {EXPENSIVE, Color(0x808000), 0.30},     // Yellow
-    {VERY_EXPENSIVE, Color(0xFF0000), 0.50} // Red
+    // {VERY_CHEAP, Color(0x00FF00), 0.00},    // Green
+    // {CHEAP, Color(0x55AA00), 0.10},         // Light Green
+    // {NORMAL, Color(0x698C00), 0.20},        // Yellowish Green
+    // {EXPENSIVE, Color(0x808000), 0.30},     // Yellow
+    // {VERY_EXPENSIVE, Color(0xFF0000), 0.40} // Red
+    // 50% brightness
+    {VERY_CHEAP, Color(0x007F00), 0.00},    // Green (50% brightness)
+    {CHEAP, Color(0x2B5500), 0.10},         // Light Green (50% brightness)
+    {NORMAL, Color(0x344600), 0.20},        // Yellowish Green (50% brightness)
+    {EXPENSIVE, Color(0x404000), 0.30},     // Yellow (50% brightness)
+    {VERY_EXPENSIVE, Color(0x7F0000), 0.40} // Red (50% brightness)
 };
 
 // Global variables.
