@@ -53,6 +53,10 @@ sensor:
 
   # Electricity prices from ENTSO-E. Expecting Home Assistant ENTSO-E Integration. https://github.com/JaccoR/hass-entso-e
   - platform: homeassistant
+    id: entso_min
+    entity_id: sensor.elektriciteit_laagste_prijs_vandaag
+
+  - platform: homeassistant
     id: entso_max  
     entity_id: sensor.elektriciteit_hoogste_prijs_vandaag
 
@@ -100,40 +104,35 @@ display:
     width: 8
     height: 8
     rotation: 180°
-    # update_interval: 16ms
-    update_interval: 10s
+    # update_interval: 60s
+    update_interval: 10s #change when deploying
     lambda: |-
           
           static EnergyMatrix energyMatrix;  
       
-          // // Unit is W - if your meter is reporting kW then it needs conversion (multiply value by 1000)
-          // // energyMatrix.SetCurrentPower((id(import_el).state - id(export_el).state));  // Use if using solar production
-          // // energyMatrix.SetCurrentPower(id(import_el).state);  // Use if not using any solar production
+          // Unit is W - if your meter is reporting kW then it needs conversion (multiply value by 1000)
+          // energyMatrix.SetCurrentPower((id(import_el).state - id(export_el).state));  // Use if using solar production
+          // energyMatrix.SetCurrentPower(id(import_el).state);  // Use if not using any solar production
 
-          // energyMatrix.SetCurrentPrice(id(price_now).state);
-          // energyMatrix.SetTodayMaxPrice(id(entso_max).state);
-          // energyMatrix.SetTodaysPrices(id(entso_today).state.c_str());
+          energyMatrix.SetCurrentPrice(id(price_now).state);
+          energyMatrix.SetMinPrice(id(entso_min).state);
+          energyMatrix.SetMaxPrice(id(entso_max).state);
+          energyMatrix.SetTodaysPrices(id(entso_today).state.c_str());
           // energyMatrix.SetTomorrowsPrices(id(entso_tomorrow).state.c_str());
 
-          // // energyMatrix.SetDailyEnergy(id(consumption_today).state);
-          // 
-          // //  energyMatrix.DisplayIcons(&it, 10, 10);
-          // // energyMatrix.WritePowerText(&it, 120, 40);
-          // // energyMatrix.WriteDailyAmount(&it, 120, 75, id(COLOR_CSS_WHITESMOKE));
-
-          // // Usable???
-          // //  energyMatrix.CreateGraph(&it, 15, 115, 220, 100, my_grey);
-          // //  energyMatrix.SetGraphGrid(&it, 0, 2, 0, 1, my_grey);
-          // //  energyMatrix.writeTimeAxis(&it, id(homeassistant_time).now().hour, id(homeassistant_time).now().minute, id(COLOR_CSS_WHITESMOKE));
-          // //  energyMatrix.SetPrices("today");
-          // //  energyMatrix.SetPrices("tomorrow");
-          // //  energyMatrix.DrawPriceGraph(&it);
-          // //  energyMatrix.WritePriceText(&it, 120, 297);
+          //
+          energyMatrix.SetPrices("today");
+          // energyMatrix.SetPrices("tomorrow");
+          // energyMatrix.DrawPriceGraph(&it);
+          //  energyMatrix.WritePriceText(&it, 120, 297);
       
           // clear screen
           it.fill(COLOR_OFF); 
           // draw rectangle
-          energyMatrix.testRectangle(&it, 1, 1, 6, 6);
+          // energyMatrix.testRectangle(&it, 1, 1, 6, 6);
+          
+          // draw price matrix
+          energyMatrix.drawPriceMatrix(&it);
 
           // Test screen
           // Draw a bulls-eye pattern
@@ -141,9 +140,9 @@ display:
           // Color green = Color(0x00FF00);
           // Color blue = Color(0x0000FF);
           // it.rectangle(0, 0, 8, 8, red);
-          //it.rectangle(1, 1, 6, 6, green);
-          //it.rectangle(2, 2, 4, 4, blue);
-          //it.rectangle(3, 3, 2, 2, red);
+          // it.rectangle(1, 1, 6, 6, green);
+          // it.rectangle(2, 2, 4, 4, blue);
+          // it.rectangle(3, 3, 2, 2, red);
     
 captive_portal:
     

@@ -4,7 +4,7 @@
 // https://github.com/Till-83/Tibber_Price_Monitor/tree/02744018b3ae67c152b2b9c5a669c9e4ff36c838
 #include "esphome.h"
 
-#define TEST
+#define DISABLED
 
 // Define the PRICE_CAT enum
 enum PRICE_CAT
@@ -26,86 +26,41 @@ struct PriceCat_t
 
 // Prices category, colors and lower boundary
 PriceCat_t priceCats[] = {
-    {VERY_CHEAP, Color(0x00FF00), 0},       // Green
+    {VERY_CHEAP, Color(0x00FF00), 0.00},    // Green
     {CHEAP, Color(0x55AA00), 0.10},         // Light Green
     {NORMAL, Color(0x698C00), 0.20},        // Yellowish Green
     {EXPENSIVE, Color(0x808000), 0.30},     // Yellow
     {VERY_EXPENSIVE, Color(0xFF0000), 0.50} // Red
 };
 
-// Global variables. Needed to retain values after reboot
+// Global variables.
 // double currentPower;
 // double dailyEnergy;
 double currentPrice;
-double todayMaxPrice;
+double minPrice; 
+double maxPrice; 
 String TodaysPrices;
+String TomorrowsPrices;
 
 // EnergyMatrix class:
 class EnergyMatrix : public Component
 {
 
 public:
-  // void DisplayIcons(display::Display *buff, int x, int y)
-  // {
-  //   if (currentPower >= 0)
-  //     buff->image(x, y, &id(grid_power));
-  //   else
-  //     buff->image(x, y, &id(solar_power));
-  // }
-
   // Test to draw a rectangle
   void testRectangle(display::Display *buff, int x, int y, int width, int height)
   {
     Color color;
-    if (1) // arbirary if statement
-    {
-      // Test rectangle with color matching price category VERY_CHEAP (green)
-      color = getPriceColour(priceCats[VERY_CHEAP].lowLim);
-      buff->rectangle(x, y, width, height, color);
-    }
-  }
 
-#ifndef TEST
-  // void CreateGraph(display::Display *buff, int x, int y, int width, int height,
-  //                  Color color = COLOR_ON)
-  // {
-  //   setPos(x, y);
-  //   setWidth(width);
-  //   setHeigh(height);
-  //   buff->rectangle(x, y, width, height, color);
-  // }
+    // Test rectangle with color matching price category VERY_EXPENSIVE (RED)
+    color = getPriceColour(priceCats[VERY_EXPENSIVE].lowLim);
+    buff->rectangle(x, y, width, height, color);
 
-  void SetGraphGrid(display::Display *buff, double xLow, double xInterval, double yLow,
-                    double yInterval, Color color = COLOR_ON)
-  {
-    double xLabel = 0, yLabel = 0;
-    double i2;
-    Color labelColor = COLOR_CSS_WHITESMOKE;
-    for (double i = (xPos + xLow * xFactor); i <= graphWidth + xPos; i += xInterval * xFactor)
-    {
-      //			ESP_LOGD("GraphGrid i: ", String(i).c_str());
-      buff->line(i, yPos, i, yPos + graphHeight, color);
-      buff->printf(i - 4, yPos + graphHeight + 10, &id(small_text), labelColor,
-                   TextAlign::BASELINE_LEFT, "%.0f", xLabel);
-      xLabel += xInterval;
-      i2 += xInterval * xFactor;
-    }
-    // For the last hour...
-    buff->printf(i2 + 8, yPos + graphHeight + 10, &id(small_text), labelColor,
-                 TextAlign::BASELINE_LEFT, "%.0f", xLabel);
-
-    for (double j = (yLow * yFactor); j < graphHeight; j += yInterval * yFactor)
-    {
-      //			ESP_LOGD("GraphGrid j: ", String(j).c_str());
-      buff->line(xPos, yPos + graphHeight - j, xPos + graphWidth, yPos + graphHeight - j, color);
-      buff->printf(xPos - 2, yPos + graphHeight - j, &id(small_text), labelColor,
-                   TextAlign::BASELINE_RIGHT, "%.1f", yLabel);
-      yLabel += yInterval;
-    }
   }
 
   // Functions to set the values from Home Assistant
 
+#ifndef DISABLED
   void SetCurrentPower(double power)
   {
     if (!isnan(power))
@@ -113,7 +68,6 @@ public:
       currentPower = power;
     }
   }
-
   void SetDailyEnergy(double energy)
   {
     if (!isnan(energy))
@@ -121,6 +75,7 @@ public:
       dailyEnergy = energy;
     }
   }
+#endif // DISABLED
 
   void SetCurrentPrice(double price)
   {
@@ -130,11 +85,21 @@ public:
     }
   }
 
-  void SetTodayMaxPrice(double price)
+  void SetMinPrice(double price)
   {
-    if (!isnan(price) || price == 0)
+    if (!isnan(price) || price == 0.0)
     {
-      todayMaxPrice = price;
+      minPrice = price;
+      ESP_LOGD("SetMinPrice", "Min set to: %.2f", minPrice);
+    }
+  }
+
+  void SetMaxPrice(double price)
+  {
+    if (!isnan(price) || price == 0.0)
+    {
+      maxPrice = price;
+      ESP_LOGD("SetMaxPrice", "Max set to: %.2f", maxPrice);
     }
   }
 
@@ -148,82 +113,7 @@ public:
 
   void SetTomorrowsPrices(String prices) { TomorrowsPrices = prices; }
 
-  // Display current power usage
-  void WritePowerText(display::Display *buff, int x, int y)
-  {
-    // if (isnan(currentPower) || currentPower == 0)
-    //   currentPower = LoadValueFromNvm("CurrentPower");
-    // if (isnan(currentPrice) || currentPrice == 0)
-    //   currentPrice = LoadValueFromNvm("CurrentPrice");
-    buff->printf(x, y, &id(large_text), PriceColour(currentPrice), TextAlign::BASELINE_CENTER,
-                 "%.0f W", currentPower);
-  }
-  // Display current price and the price level
-  void WritePriceText(display::Display *buff, int x, int y)
-  {
-
-    // if (isnan(currentPrice) || currentPrice == 0)
-    //   currentPrice = LoadValueFromNvm("CurrentPrice");
-
-    // print price
-    buff->printf(120, 257, &id(price_text), COLOR_CSS_WHITESMOKE, TextAlign::BASELINE_CENTER,
-                 "%.2f kr/kWh", currentPrice);
-
-    String price;
-    if (inRange(currentPrice, EXTREMELY_EXPENSIVE, 100))
-    {
-      price = EXTREMELY_EXPENSIVE_TEXT;
-    }
-    else if (inRange(currentPrice, VERY_EXPENSIVE, EXTREMELY_EXPENSIVE))
-    {
-      price = VERY_EXPENSIVE_TEXT;
-    }
-    else if (inRange(currentPrice, EXPENSIVE, VERY_EXPENSIVE))
-    {
-      price = EXPENSIVE_TEXT;
-    }
-    else if (inRange(currentPrice, NORMAL, EXPENSIVE))
-    {
-      price = NORMAL_TEXT;
-    }
-    else if (inRange(currentPrice, CHEAP, NORMAL))
-    {
-      price = CHEAP_TEXT;
-    }
-    else if (inRange(currentPrice, VERY_CHEAP, CHEAP))
-    {
-      price = VERY_CHEAP_TEXT;
-    }
-    else if (inRange(currentPrice, -100, VERY_CHEAP))
-    {
-      price = BELOW_VERY_CHEAP_TEXT;
-    }
-
-    buff->printf(x, y, &id(large_text), PriceColour(currentPrice), TextAlign::BASELINE_CENTER, "%s",
-                 price.c_str());
-  }
-  // Write the timeline on the graph
-  void writeTimeAxis(display::Display *buff, double hour, double minute, Color color = COLOR_ON)
-  {
-    double timeLineVal = hour + (minute / 60);
-    buff->line(xPos + timeLineVal * xFactor, yPos, xPos + timeLineVal * xFactor, yPos + graphHeight,
-               color);
-  }
-
-  // Write energy consumed so far today
-  // void WriteDailyAmount(display::Display *buff, int x, int y, Color color = COLOR_ON)
-  // {
-  //   if (isnan(dailyEnergy) || dailyEnergy == 0)
-  //   {
-  //     dailyEnergy = LoadValueFromNvm("DailyEnergy");
-  //   }
-  //   buff->printf(x, y, &id(energy_text), color, TextAlign::BASELINE_CENTER, "Idag: %.1f kWh",
-  //                dailyEnergy);
-  //   buff->printf(x, y + 23, &id(energy_text), color, TextAlign::BASELINE_CENTER, "Kostnad: %.2f
-  //   kr",
-  //                CalculateAccumulatedCost(currentPrice, dailyEnergy));
-  // }
-
+#ifndef DISABLED
   // Draw the graph
   // void DrawPriceGraph(display::Display *buff)
   // {
@@ -240,26 +130,26 @@ public:
   //   if (price > 0)
   //     lastprice = AddPrice(buff, 24, price, 23, lastprice);
   // }
+#endif // DISABLED
 
   // display 8x8 prices visual
-  void drawPrice(display::Display *buff)
+  void drawPriceMatrix(display::Display *buff)
   {
-    int lastheight = 0;
     int height;
 
     for (int i = 0; i < 8; i++)
     {
-      if (!PRICES.price[i].isNull)
+      if (!isnan(priceArray[i]))
       {
         // Calculate the height of the bar
-        if (PRICES.maximumPrice == PRICES.minimumPrice)
+        if (maxPrice == minPrice)
         {
           height = 1; // Avoid division by zero
         }
         else
         {
-          height = (int)(8 * (priceArray[i] - PRICES.minimumPrice) /
-                         (PRICES.maximumPrice - PRICES.minimumPrice));
+          height = (int)(8 * (priceArray[i] - minPrice) /
+                         (maxPrice - minPrice));
           height++;
         }
 
@@ -269,21 +159,99 @@ public:
           height = 8;
         }
 
-        // // Debugging output
-        // Serial.println(PRICES.price[i].price);
-        // Serial.println(PRICES.price[i].level);
-        // Serial.println(i);
-        // Serial.println(height);
-
-        if (i != 0 || firstBlink) // Draw if ready for display
-        {
-          drawMatrixLine(buff, i, height, colors[PRICES.price[i].level]);
-        }
+        ESP_LOGD("drawPrice", "i: %d, price: %f, Height: %d", i, priceArray[i], height);
+       
+        // Draw
+        drawMatrixLine(buff, i, height, getPriceColour(priceArray[i]));
       }
     }
   }
 
-  // Deserialize the JSON string from NordPool
+  // Deserialize the JSON string from ENTSO-E
+  void SetPrices(String day)
+  {
+    String prices;
+    double *targetArray;
+
+    int i = 0;
+    int startPos = 0;
+
+    int objectStart, objectEnd;
+    String objectStr;
+    int pricePos;
+
+    int valueStart;
+    int valueEnd;
+
+    String priceStr;
+
+    // Select the appropriate data source and target array
+    if (day == "tomorrow")
+    {
+      prices = TomorrowsPrices;
+      targetArray = priceArrayTomorrow;
+    }
+    else
+    {
+      prices = TodaysPrices;
+      targetArray = priceArray;
+    }
+
+    // Find each object in the array
+    while (startPos < prices.length() && i < 50)
+    {
+      objectStart = prices.indexOf('{', startPos);
+      if (objectStart == -1)
+        break;
+
+      objectEnd = prices.indexOf('}', objectStart);
+      if (objectEnd == -1)
+        break;
+
+      // Extract the object string
+      objectStr = prices.substring(objectStart, objectEnd + 1);
+
+      // pos of price field within object
+      pricePos = objectStr.indexOf("'price':");
+
+      if (pricePos != -1)
+      {
+        // Find the start of the price value
+        valueStart = pricePos + 8; // Length of "'price':" or "\"price\":"
+
+        // Skip any whitespace
+        while (valueStart < objectStr.length() &&
+               (objectStr[valueStart] == ' ' || objectStr[valueStart] == ':'))
+        {
+          valueStart++;
+        }
+
+        // Find the end of the price value (either comma or closing brace)
+        valueEnd = objectStr.indexOf('}', valueStart);
+
+        if (valueEnd != -1)
+        {
+          // Extract and convert the price value
+          priceStr = objectStr.substring(valueStart, valueEnd);
+          targetArray[i] = priceStr.toFloat(); //
+          ESP_LOGD("SetPrices", "Extracted price[%d]: %.2f", i,targetArray[i]);
+          i++;
+        }
+      }
+
+      // Move to the next object
+      startPos = objectEnd + 1;
+    }
+
+    // Fill remaining positions with 0 if any
+    while (i < 50)
+    {
+      targetArray[i] = 0;
+      i++;
+    }
+  }
+
+#ifndef DISABLED
   void SetPrices(String day)
   {
     String prices;
@@ -298,6 +266,7 @@ public:
     else
       prices = TodaysPrices;
 
+    // Remove brackets if present
     prices.replace("[", "");
     prices.replace("]", " ");
 
@@ -323,7 +292,7 @@ public:
         priceArray[k] = array[k].toFloat();
     }
   }
-#endif // TEST
+#endif // DISABLED
 
 private:
   display::Display *vbuff;
@@ -333,15 +302,9 @@ private:
 
   double priceArray[50];
   double priceArrayTomorrow[50];
-  double prevDailyEnergy, accumulatedCost;
   String TomorrowsPrices;
 
-  void setPos(int x, int y)
-  {
-    xPos = x;
-    yPos = y;
-  }
-
+  // Draw line on matrix
   void drawMatrixLine(display::Display *buff, int column, int height, Color color = COLOR_ON)
   {
     buff->line(column, 0, column, height, color);
@@ -359,7 +322,7 @@ private:
   //   //		ESP_LOGD("GraphGrid x1: ", String(xPos + x1*xFactor).c_str());
   // }
 
-#ifndef TEST
+#ifndef DISABLED
   double AddPrice(display::Display *buff, int hour, double price, int lastHour, double lastPrice)
   {
     if (lastHour < 0)
@@ -370,7 +333,7 @@ private:
 
     return price;
   }
-#endif // TEST
+#endif // DISABLED
 
   // Return Colour matching with prices
   Color getPriceColour(double price)
@@ -394,11 +357,11 @@ private:
       }
     }
 
+
     // Log a warning if no matching color is found
     ESP_LOGD("EnergyMatrix", "No color matching with price: %f", price);
-
-    // Default return value if no match is found
-    return COLOR_OFF; // Replace with a suitable default color
+    // Matrix Off if no match found
+    return COLOR_OFF;
   }
 
 }; // class
