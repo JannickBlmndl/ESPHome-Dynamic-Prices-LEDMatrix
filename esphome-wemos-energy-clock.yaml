@@ -1,9 +1,9 @@
 substitutions:
   device_name:  "esphome-wemos-energy-clock"
   # Configuration
-  sub_timezone: "Europe/Amsterdam"
+  sub_timezone: "Europe/Amsterdam" # Set your time zone
   sub_update_interval: 60s
-  sub_rotation: 0°
+  sub_rotation: 0° # Display rotation
 esphome:
   name: ${device_name}
   includes:
@@ -11,7 +11,6 @@ esphome:
 
 esp8266:
   board: d1_mini
-
 
 # Enable logging
 logger:
@@ -41,8 +40,6 @@ time:
     id: homeassistant_time
     timezone: ${sub_timezone}
 
-# color:
-
 # Define sensors in HomeAssistant that we use for data
 sensor:
   # # Current import (unit is W - if you meter is using kW then it needs conversion)
@@ -69,15 +66,6 @@ sensor:
     id: price_now
     entity_id: sensor.elektriciteit_huidige_markt_prijs
 
-  # TO DO consumption today (kWh and price)
-
-  # Example:
-  # utility_meter:
-  # produktion_huset_per_dag:
-  #   source: sensor.cumulative_active_export
-  #   cycle: daily
-  
-
 text_sensor:
   - platform: homeassistant # Entso-E
     id: entso_today
@@ -94,11 +82,10 @@ light:
     id: led_ring_light
     name: "Led ring"
     internal: True
-    pin: GPIO13
+    pin: GPIO2
     num_leds: 12
     variant: WS2812
     type: GRB
-
     
 # 12x CJMCU2812 WS2812B Addressable Light Display
 display:
