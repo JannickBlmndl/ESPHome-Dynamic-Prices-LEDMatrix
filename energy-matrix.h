@@ -249,7 +249,9 @@ private:
   // Draw line on matrix
   void drawMatrixLine(display::Display *buff, int column, int height, Color color = COLOR_ON)
   {
-    buff->line(column, 0, column, height, color);
+    int y2 = height-1; // y2, height starts from 0
+
+    buff->line(column, 0, column, y2, color);
   }
 
   // Return Colour matching with prices

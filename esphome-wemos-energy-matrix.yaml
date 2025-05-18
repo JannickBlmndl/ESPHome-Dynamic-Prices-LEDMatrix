@@ -3,7 +3,8 @@ substitutions:
   device_name:  "esphome-wemos-energy-matrix"
   # Configuration
   sub_timezone: "Europe/Amsterdam"
-  sub_update_interval: 5s
+  sub_update_interval: 60s
+  sub_rotation: 0°
 esphome:
   name: ${device_name}
   includes:
@@ -107,13 +108,12 @@ display:
     addressable_light_id: led_matrix_light
     width: 8
     height: 8
-    rotation: 180°
+    rotation: ${sub_rotation}
     update_interval: ${sub_update_interval}
     pixel_mapper: |-
-      // Flip orientation horizontal bars for the CJMCU-64 has
+      // Flip orientation horizontal bars for the CJMCU-64
       return (7 - x) + (y * 8);
     lambda: |-
-          
           static EnergyMatrix energyMatrix;  
           energyMatrix.SetCurrentPrice(id(price_now).state);
           energyMatrix.SetMinPrice(id(entso_min).state);
@@ -124,10 +124,10 @@ display:
           energyMatrix.SetPrices("today");
           energyMatrix.SetPrices("tomorrow");
       
-          // clear screen
+          // Clear screen
           it.fill(COLOR_OFF); 
           
-          // draw price matrix
+          // Draw price matrix
           energyMatrix.drawPriceMatrix(&it);
     
 captive_portal:
