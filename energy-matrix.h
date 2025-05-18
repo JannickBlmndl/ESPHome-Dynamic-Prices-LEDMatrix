@@ -30,7 +30,7 @@ PriceCat_t priceCats[] = {
     // {EXPENSIVE, Color(0x808000), 0.30},     // Yellow
     // {VERY_EXPENSIVE, Color(0xFF0000), 0.40} // Red
     // 50% brightness
-    {VERY_CHEAP, Color(0x007F00), 0.00},    // Green (50% brightness)
+    {VERY_CHEAP, Color(0x007F00), 0.00},  // Green (50% brightness)
     {CHEAP, Color(0x2B5500), 0.10},         // Light Green (50% brightness)
     {NORMAL, Color(0x344600), 0.20},        // Yellowish Green (50% brightness)
     {EXPENSIVE, Color(0x404000), 0.30},     // Yellow (50% brightness)
@@ -254,10 +254,13 @@ private:
     buff->line(column, 0, column, y2, color);
   }
 
-  // Return Colour matching with prices
+  // Return Colour matching with price
   Color getPriceColour(double price)
   {
     const int numOfCats = sizeof(priceCats) / sizeof(priceCats[0]);
+
+    if(price < 0.0) // Negative price
+      return priceCats[VERY_CHEAP].color;
 
     for (int i = 0; i < numOfCats; i++)
     {
