@@ -70,6 +70,7 @@
 			"sstream": "cpp",
 			"*.bak": "cpp",
 			"chrono": "cpp"
-		}
+		},
+		"workbench.colorTheme": "Visual Studio Light"
 	}
 }

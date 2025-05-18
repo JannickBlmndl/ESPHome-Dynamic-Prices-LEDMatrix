@@ -2,9 +2,9 @@
 substitutions:
   device_name:  "esphome-wemos-energy-matrix"
   # Configuration
-  sub_timezone: "Europe/Amsterdam"
+  sub_timezone: "Europe/Amsterdam" # Set your time zone
   sub_update_interval: 60s
-  sub_rotation: 0°
+  sub_rotation: 0° # Display rotation
 esphome:
   name: ${device_name}
   includes:
@@ -12,7 +12,6 @@ esphome:
 
 esp8266:
   board: d1_mini
-
 
 # Enable logging
 logger:
@@ -42,8 +41,6 @@ time:
     id: homeassistant_time
     timezone: ${sub_timezone}
 
-# color:
-
 # Define sensors in HomeAssistant that we use for data
 sensor:
   # # Current import (unit is W - if you meter is using kW then it needs conversion)
@@ -70,15 +67,6 @@ sensor:
     id: price_now
     entity_id: sensor.elektriciteit_huidige_markt_prijs
 
-  # TO DO consumption today (kWh and price)
-
-  # Example:
-  # utility_meter:
-  # produktion_huset_per_dag:
-  #   source: sensor.cumulative_active_export
-  #   cycle: daily
-  
-
 text_sensor:
   - platform: homeassistant # Entso-E
     id: entso_today
@@ -100,7 +88,6 @@ light:
     variant: WS2812
     type: GRB
 
-    
 # 8x8 WS2812B Addressable Light Display
 display:
   - platform: addressable_light
@@ -111,7 +98,7 @@ display:
     rotation: ${sub_rotation}
     update_interval: ${sub_update_interval}
     pixel_mapper: |-
-      // Flip orientation horizontal bars for the CJMCU-64
+      // Remap pixels for LR chronological order price bars on the CJMCU-64
       return (7 - x) + (y * 8);
     lambda: |-
           static EnergyMatrix energyMatrix;  

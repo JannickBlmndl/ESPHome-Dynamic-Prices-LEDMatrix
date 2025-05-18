@@ -128,7 +128,7 @@ public:
       {
         ESP_LOGD("drawPrice", "hour: %d, price is NUll", tmpHour);
       }
-      else // There's a price
+      else // There's a valid price
       {
         // Calculate the height of the bar
         if (maxPrice == minPrice)
