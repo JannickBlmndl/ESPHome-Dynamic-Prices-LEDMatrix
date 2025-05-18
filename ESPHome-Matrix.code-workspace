@@ -68,7 +68,8 @@
 			"istream": "cpp",
 			"ostream": "cpp",
 			"sstream": "cpp",
-			"*.bak": "cpp"
+			"*.bak": "cpp",
+			"chrono": "cpp"
 		}
 	}
 }

@@ -117,7 +117,10 @@ public:
     }
   }
 
-  void SetTomorrowsPrices(String prices) { TomorrowsPrices = prices; }
+  void SetTomorrowsPrices(String prices)
+  { 
+    TomorrowsPrices = prices;
+  }
 
 #ifndef DISABLED
   // Draw the graph
@@ -142,10 +145,36 @@ public:
   void drawPriceMatrix(display::Display *buff)
   {
     int height;
+    int currentHour = 0;
+    int tmpHour;
+    bool dayFlag = false; // include data of tommorow
 
-    for (int i = 0; i < 8; i++)
+    // Get current hour from Home Assistant time
+    if (id(homeassistant_time).now().is_valid())
     {
-      if (!isnan(priceArray[i]))
+      currentHour = id(homeassistant_time).now().hour;
+      ESP_LOGD("drawPrice", "currentHour: %d", currentHour);
+
+    }
+
+    for (int i = 0; i < 8; i++) // loop over 8 hours
+    {
+      tmpHour = currentHour + i;
+      double price = 0;
+
+      if (tmpHour > 23)
+      {
+        tmpHour = tmpHour - 24;
+        dayFlag = true;
+      }
+
+      price = dayFlag == 0 ? priceArray[tmpHour] : priceArrayTomorrow[tmpHour];
+      
+      if(isnan(price))
+      {
+        ESP_LOGD("drawPrice", "hour: %d, price is NUll", tmpHour);
+      }
+      else //
       {
         // Calculate the height of the bar
         if (maxPrice == minPrice)
@@ -154,21 +183,17 @@ public:
         }
         else
         {
-          height = (int)(8 * (priceArray[i] - minPrice) /
-                         (maxPrice - minPrice));
+          height = (int)(8 * (price - minPrice) / (maxPrice - minPrice));
           height++;
         }
 
-        // Constrain height to matrix bounds
-        if (height > 8)
-        {
+        if (height > 8) // Constrain height to matrix bounds
           height = 8;
-        }
 
-        ESP_LOGD("drawPrice", "i: %d, price: %f, Height: %d", i, priceArray[i], height);
-       
+        ESP_LOGD("drawPrice", "i: %d, hour: %d, price: %.2f, Height: %d, dayFlag: %d", i,
+                 tmpHour % 24, price, height, dayFlag);
         // Draw
-        drawMatrixLine(buff, i, height, getPriceColour(priceArray[i]));
+        drawMatrixLine(buff, i, height, getPriceColour(price));
       }
     }
   }

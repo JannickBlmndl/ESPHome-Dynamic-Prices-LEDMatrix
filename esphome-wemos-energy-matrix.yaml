@@ -1,6 +1,9 @@
 # https://github.com/johannyren/PowerDisplayESPHome/blob/main/power-display-esphome.yaml
 substitutions:
   device_name:  "esphome-wemos-energy-matrix"
+  # Configuration
+  sub_timezone: "Europe/Amsterdam"
+  sub_update_interval: 60s
 esphome:
   name: ${device_name}
   includes:
@@ -36,6 +39,7 @@ wifi:
 time:
   - platform: homeassistant
     id: homeassistant_time
+    timezone: ${sub_timezone}
 
 # color:
 
@@ -104,8 +108,10 @@ display:
     width: 8
     height: 8
     rotation: 180°
-    # update_interval: 60s
-    update_interval: 10s #change when deploying
+    update_interval: ${sub_update_interval}
+    pixel_mapper: |-
+      // Flip orientation horizontal bars for the CJMCU-64 has
+      return (7 - x) + (y * 8);
     lambda: |-
           
           static EnergyMatrix energyMatrix;  
@@ -118,7 +124,7 @@ display:
           energyMatrix.SetMinPrice(id(entso_min).state);
           energyMatrix.SetMaxPrice(id(entso_max).state);
           energyMatrix.SetTodaysPrices(id(entso_today).state.c_str());
-          // energyMatrix.SetTomorrowsPrices(id(entso_tomorrow).state.c_str());
+          energyMatrix.SetTomorrowsPrices(id(entso_tomorrow).state.c_str());
 
           //
           energyMatrix.SetPrices("today");
