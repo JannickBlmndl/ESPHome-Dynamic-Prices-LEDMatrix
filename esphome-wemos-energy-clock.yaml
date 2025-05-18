@@ -1,6 +1,5 @@
-# https://github.com/johannyren/PowerDisplayESPHome/blob/main/power-display-esphome.yaml
 substitutions:
-  device_name:  "esphome-wemos-energy-matrix"
+  device_name:  "esphome-wemos-energy-clock"
   # Configuration
   sub_timezone: "Europe/Amsterdam"
   sub_update_interval: 60s
@@ -8,7 +7,7 @@ substitutions:
 esphome:
   name: ${device_name}
   includes:
-    - energy-matrix.h  
+    - energy-clock.h  
 
 esp8266:
   board: d1_mini
@@ -35,7 +34,7 @@ wifi:
 
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
-    ssid: "Energy Matrix Fallback"
+    ssid: "Energy Clock Fallback"
 
 time:
   - platform: homeassistant
@@ -89,46 +88,43 @@ text_sensor:
     entity_id: sensor.elektriciteit_gemiddelde_prijs_vandaag
     attribute: prices_tomorrow
 
-#--------- LED matrix ----------------
+#--------- LED ring ----------------
 light:
   - platform: neopixelbus
-    id: led_matrix_light
-    name: "Led matrix"
+    id: led_ring_light
+    name: "Led ring"
     internal: True
     pin: GPIO13
-    num_leds: 64
+    num_leds: 12
     variant: WS2812
     type: GRB
 
     
-# 8x8 WS2812B Addressable Light Display
+# 12x CJMCU2812 WS2812B Addressable Light Display
 display:
   - platform: addressable_light
-    id: led_matrix_display
-    addressable_light_id: led_matrix_light
-    width: 8
-    height: 8
+    id: led_ring_display
+    addressable_light_id: led_ring_light
+    width: 12
+    height: 1
     rotation: ${sub_rotation}
     update_interval: ${sub_update_interval}
-    pixel_mapper: |-
-      // Flip orientation horizontal bars for the CJMCU-64
-      return (7 - x) + (y * 8);
     lambda: |-
-          static EnergyMatrix energyMatrix;  
-          energyMatrix.SetCurrentPrice(id(price_now).state);
-          energyMatrix.SetMinPrice(id(entso_min).state);
-          energyMatrix.SetMaxPrice(id(entso_max).state);
-          energyMatrix.SetTodaysPrices(id(entso_today).state.c_str());
-          energyMatrix.SetTomorrowsPrices(id(entso_tomorrow).state.c_str());
+          static EnergyClock energyClock;  
+          energyClock.SetCurrentPrice(id(price_now).state);
+          energyClock.SetMinPrice(id(entso_min).state);
+          energyClock.SetMaxPrice(id(entso_max).state);
+          energyClock.SetTodaysPrices(id(entso_today).state.c_str());
+          energyClock.SetTomorrowsPrices(id(entso_tomorrow).state.c_str());
 
-          energyMatrix.SetPrices("today");
-          energyMatrix.SetPrices("tomorrow");
+          energyClock.SetPrices("today");
+          energyClock.SetPrices("tomorrow");
       
           // Clear screen
           it.fill(COLOR_OFF); 
           
-          // Draw price matrix
-          energyMatrix.drawPriceMatrix(&it);
+          // Draw price pixel clock 12h
+          energyClock.drawPriceClock(&it);
     
 captive_portal:
     

@@ -1,6 +1,4 @@
-// get multiple values of home assistant and map to matrix like matrixShowTibber
-// https://esphome.io/api/classesphome_1_1display_1_1_display.html#a41d1f952fd82df8dcd09b7fd9a92df66
-// https://github.com/Till-83/Tibber_Price_Monitor/tree/02744018b3ae67c152b2b9c5a669c9e4ff36c838
+// 12 pixel EnergyClock
 #include "esphome.h"
 
 // Define the PRICE_CAT enum
@@ -44,20 +42,11 @@ double maxPrice;
 String TodaysPrices;
 String TomorrowsPrices;
 
-// EnergyMatrix class:
-class EnergyMatrix : public Component
+// EnergyClock class:
+class EnergyClock : public Component
 {
 
 public:
-  // Test to draw a rectangle
-  void testRectangle(display::Display *buff, int x, int y, int width, int height)
-  {
-    Color color;
-
-    // Test rectangle with color matching price category VERY_EXPENSIVE (RED)
-    color = getPriceColour(priceCats[VERY_EXPENSIVE].lowLim);
-    buff->rectangle(x, y, width, height, color);
-  }
 
   // Set the values from Home Assistant state
   void SetCurrentPrice(double price)
@@ -96,59 +85,32 @@ public:
 
   void SetTomorrowsPrices(String prices) { TomorrowsPrices = prices; }
 
-  // display 8x8 prices visual
-  void drawPriceMatrix(display::Display *buff)
+  // 12 neopixel ring
+  void drawPriceClock(display::Display *buff)
   {
-    int height;
     int currentHour = 0;
-    int tmpHour;
-    bool dayFlag = false; // include data of tommorow
+    double price = 0;
 
-    // Get current hour from Home Assistant time
     if (id(homeassistant_time).now().is_valid())
-    {
       currentHour = id(homeassistant_time).now().hour;
-      ESP_LOGD("drawPrice", "currentHour: %d", currentHour);
-    }
+    int start = 0;
 
-    for (int i = 0; i < 8; i++) // loop over 8 hours
+    if (currentHour >= 12) // Past noon
+      start = 12;
+      
+    // Loop through 12 consecutive hours, starting from 0 or 12
+    for (int i = 0; i < 12; i++)
     {
-      tmpHour = currentHour + i;
-      double price = 0;
+      int hour = start + i; // Actual hour in the day
+      int y = i % 12;       // map y to 0-11
 
-      if (tmpHour > 23)
-      {
-        tmpHour = tmpHour - 24;
-        dayFlag = true;
-      }
+      price = priceArray[hour]; // Get price for thisHour
 
-      price = dayFlag == 0 ? priceArray[tmpHour] : priceArrayTomorrow[tmpHour];
+      ESP_LOGD("drawPriceRing", "i: %d, hour: %d, price: %.2f, Height: %d, dayFlag: %d", i, hour,
+               price);
 
-      if (isnan(price))
-      {
-        ESP_LOGD("drawPrice", "hour: %d, price is NUll", tmpHour);
-      }
-      else // There's a price
-      {
-        // Calculate the height of the bar
-        if (maxPrice == minPrice)
-        {
-          height = 1; // Avoid division by zero
-        }
-        else
-        {
-          height = (int)(8 * (price - minPrice) / (maxPrice - minPrice));
-          height++;
-        }
-
-        if (height > 8) // Constrain height to matrix bounds
-          height = 8;
-
-        ESP_LOGD("drawPrice", "i: %d, hour: %d, price: %.2f, Height: %d, dayFlag: %d", i,
-                 tmpHour % 24, price, height, dayFlag);
-        // Draw
-        drawMatrixLine(buff, i, height, getPriceColour(price));
-      }
+      // draw pixel
+      buff->draw_pixel_at(i, y, getPriceColour(price));
     }
   }
 
@@ -239,20 +201,9 @@ public:
 private:
   display::Display *vbuff;
 
-  int xPos, yPos;
-  float xFactor, yFactor;
-
   double priceArray[50];
   double priceArrayTomorrow[50];
   String TomorrowsPrices;
-
-  // Draw line on matrix
-  void drawMatrixLine(display::Display *buff, int column, int height, Color color = COLOR_ON)
-  {
-    int y2 = height-1; // y2, height starts from 0
-
-    buff->line(column, 0, column, y2, color);
-  }
 
   // Return Colour matching with prices
   Color getPriceColour(double price)
@@ -276,9 +227,9 @@ private:
       }
     }
     // Log a warning if no matching color is found
-    ESP_LOGD("EnergyMatrix", "No color matching with price: %f", price);
+    ESP_LOGD("EnergyClock", "No color matching with price: %f", price);
     
-    return COLOR_OFF; // LEdMatrix Off if no match found
+    return COLOR_OFF; // LedClock Off if no match found
   }
 
 }; // class
