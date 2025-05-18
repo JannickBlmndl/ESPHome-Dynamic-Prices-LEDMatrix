@@ -1,10 +1,7 @@
-// to do
 // get multiple values of home assistant and map to matrix like matrixShowTibber
 // https://esphome.io/api/classesphome_1_1display_1_1_display.html#a41d1f952fd82df8dcd09b7fd9a92df66
 // https://github.com/Till-83/Tibber_Price_Monitor/tree/02744018b3ae67c152b2b9c5a669c9e4ff36c838
 #include "esphome.h"
-
-#define DISABLED
 
 // Define the PRICE_CAT enum
 enum PRICE_CAT
@@ -26,6 +23,7 @@ struct PriceCat_t
 
 // Prices category, colors and lower boundary
 PriceCat_t priceCats[] = {
+    // 100 % brightness
     // {VERY_CHEAP, Color(0x00FF00), 0.00},    // Green
     // {CHEAP, Color(0x55AA00), 0.10},         // Light Green
     // {NORMAL, Color(0x698C00), 0.20},        // Yellowish Green
@@ -39,12 +37,10 @@ PriceCat_t priceCats[] = {
     {VERY_EXPENSIVE, Color(0x7F0000), 0.40} // Red (50% brightness)
 };
 
-// Global variables.
-// double currentPower;
-// double dailyEnergy;
+// Global variables
 double currentPrice;
-double minPrice; 
-double maxPrice; 
+double minPrice;
+double maxPrice;
 String TodaysPrices;
 String TomorrowsPrices;
 
@@ -61,28 +57,9 @@ public:
     // Test rectangle with color matching price category VERY_EXPENSIVE (RED)
     color = getPriceColour(priceCats[VERY_EXPENSIVE].lowLim);
     buff->rectangle(x, y, width, height, color);
-
   }
 
-  // Functions to set the values from Home Assistant
-
-#ifndef DISABLED
-  void SetCurrentPower(double power)
-  {
-    if (!isnan(power))
-    {
-      currentPower = power;
-    }
-  }
-  void SetDailyEnergy(double energy)
-  {
-    if (!isnan(energy))
-    {
-      dailyEnergy = energy;
-    }
-  }
-#endif // DISABLED
-
+  // Set the values from Home Assistant state
   void SetCurrentPrice(double price)
   {
     if (!isnan(price))
@@ -117,29 +94,7 @@ public:
     }
   }
 
-  void SetTomorrowsPrices(String prices)
-  { 
-    TomorrowsPrices = prices;
-  }
-
-#ifndef DISABLED
-  // Draw the graph
-  // void DrawPriceGraph(display::Display *buff)
-  // {
-  //   double lastprice = 0;
-  //   double price;
-
-  //   for (int priceCount = 0; priceCount < 24; priceCount++)
-  //   {
-  //     price = priceArray[priceCount];
-  //     lastprice = AddPrice(buff, priceCount, price, priceCount - 1, lastprice);
-  //   }
-  //   // Add last piece if we know the price at midninght tomorrow
-  //   price = priceArrayTomorrow[0];
-  //   if (price > 0)
-  //     lastprice = AddPrice(buff, 24, price, 23, lastprice);
-  // }
-#endif // DISABLED
+  void SetTomorrowsPrices(String prices) { TomorrowsPrices = prices; }
 
   // display 8x8 prices visual
   void drawPriceMatrix(display::Display *buff)
@@ -154,7 +109,6 @@ public:
     {
       currentHour = id(homeassistant_time).now().hour;
       ESP_LOGD("drawPrice", "currentHour: %d", currentHour);
-
     }
 
     for (int i = 0; i < 8; i++) // loop over 8 hours
@@ -169,12 +123,12 @@ public:
       }
 
       price = dayFlag == 0 ? priceArray[tmpHour] : priceArrayTomorrow[tmpHour];
-      
-      if(isnan(price))
+
+      if (isnan(price))
       {
         ESP_LOGD("drawPrice", "hour: %d, price is NUll", tmpHour);
       }
-      else //
+      else // There's a price
       {
         // Calculate the height of the bar
         if (maxPrice == minPrice)
@@ -265,7 +219,7 @@ public:
           // Extract and convert the price value
           priceStr = objectStr.substring(valueStart, valueEnd);
           targetArray[i] = priceStr.toFloat(); //
-          ESP_LOGD("SetPrices", "Extracted price[%d]: %.2f", i,targetArray[i]);
+          ESP_LOGD("SetPrices", "Extracted price[%d]: %.2f", i, targetArray[i]);
           i++;
         }
       }
@@ -282,49 +236,6 @@ public:
     }
   }
 
-#ifndef DISABLED
-  void SetPrices(String day)
-  {
-    String prices;
-    String array[25];
-    int r = 0, t = 0;
-
-    // if (TodaysPrices == "")
-    //   TodaysPrices = LoadStringFromNvm("TodaysPrices");
-
-    if (day == "tomorrow")
-      prices = TomorrowsPrices;
-    else
-      prices = TodaysPrices;
-
-    // Remove brackets if present
-    prices.replace("[", "");
-    prices.replace("]", " ");
-
-    for (int i = 0; i < prices.length(); i++)
-    {
-      if (prices[i] == ' ' || prices[i] == ',')
-      {
-        if (i - r > 1)
-        {
-          array[t] = prices.substring(r, i);
-          t++;
-        }
-        r = (i + 1);
-      }
-    }
-
-    for (int k = 0; k <= t; k++)
-    {
-      //		ESP_LOGD("SetPrices Prices: ", array[k].c_str());
-      if (day == "tomorrow")
-        priceArrayTomorrow[k] = array[k].toFloat();
-      else
-        priceArray[k] = array[k].toFloat();
-    }
-  }
-#endif // DISABLED
-
 private:
   display::Display *vbuff;
 
@@ -340,31 +251,6 @@ private:
   {
     buff->line(column, 0, column, height, color);
   }
-
-  // void DrawGraphLine(display::Display *buff, double x1, double x2, double y1, double y2,
-  //                    Color color = COLOR_ON)
-  // {
-  //   buff->line(xPos + x1 * xFactor, yPos + graphHeight - (y1 * yFactor), xPos + x2 * xFactor,
-  //              yPos + graphHeight - (y2 * yFactor), color);
-  //   buff->line(xPos + x1 * xFactor, yPos + 1 + graphHeight - (y1 * yFactor), xPos + x2 * xFactor,
-  //              yPos + 1 + graphHeight - (y2 * yFactor), color);
-  //   buff->line(xPos + x1 * xFactor, yPos + 2 + graphHeight - (y1 * yFactor), xPos + x2 * xFactor,
-  //              yPos + 2 + graphHeight - (y2 * yFactor), color);
-  //   //		ESP_LOGD("GraphGrid x1: ", String(xPos + x1*xFactor).c_str());
-  // }
-
-#ifndef DISABLED
-  double AddPrice(display::Display *buff, int hour, double price, int lastHour, double lastPrice)
-  {
-    if (lastHour < 0)
-      lastHour = 0;
-    if (lastPrice == 0)
-      lastPrice = price;
-    DrawGraphLine(buff, lastHour, hour, lastPrice, price, getPriceColour(lastPrice)); // matrix line
-
-    return price;
-  }
-#endif // DISABLED
 
   // Return Colour matching with prices
   Color getPriceColour(double price)
@@ -387,12 +273,10 @@ private:
         return priceCats[i].color;
       }
     }
-
-
     // Log a warning if no matching color is found
     ESP_LOGD("EnergyMatrix", "No color matching with price: %f", price);
-    // Matrix Off if no match found
-    return COLOR_OFF;
+    
+    return COLOR_OFF; // LEdMatrix Off if no match found
   }
 
 }; // class
