@@ -3,7 +3,7 @@ substitutions:
   device_name:  "esphome-wemos-energy-matrix"
   # Configuration
   sub_timezone: "Europe/Amsterdam"
-  sub_update_interval: 60s
+  sub_update_interval: 5s
 esphome:
   name: ${device_name}
   includes:
@@ -115,40 +115,20 @@ display:
     lambda: |-
           
           static EnergyMatrix energyMatrix;  
-      
-          // Unit is W - if your meter is reporting kW then it needs conversion (multiply value by 1000)
-          // energyMatrix.SetCurrentPower((id(import_el).state - id(export_el).state));  // Use if using solar production
-          // energyMatrix.SetCurrentPower(id(import_el).state);  // Use if not using any solar production
-
           energyMatrix.SetCurrentPrice(id(price_now).state);
           energyMatrix.SetMinPrice(id(entso_min).state);
           energyMatrix.SetMaxPrice(id(entso_max).state);
           energyMatrix.SetTodaysPrices(id(entso_today).state.c_str());
           energyMatrix.SetTomorrowsPrices(id(entso_tomorrow).state.c_str());
 
-          //
           energyMatrix.SetPrices("today");
-          // energyMatrix.SetPrices("tomorrow");
-          // energyMatrix.DrawPriceGraph(&it);
-          //  energyMatrix.WritePriceText(&it, 120, 297);
+          energyMatrix.SetPrices("tomorrow");
       
           // clear screen
           it.fill(COLOR_OFF); 
-          // draw rectangle
-          // energyMatrix.testRectangle(&it, 1, 1, 6, 6);
           
           // draw price matrix
           energyMatrix.drawPriceMatrix(&it);
-
-          // Test screen
-          // Draw a bulls-eye pattern
-          // Color red = Color(0xFF0000);
-          // Color green = Color(0x00FF00);
-          // Color blue = Color(0x0000FF);
-          // it.rectangle(0, 0, 8, 8, red);
-          // it.rectangle(1, 1, 6, 6, green);
-          // it.rectangle(2, 2, 4, 4, blue);
-          // it.rectangle(3, 3, 2, 2, red);
     
 captive_portal:
     
