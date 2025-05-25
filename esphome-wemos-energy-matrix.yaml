@@ -83,7 +83,7 @@ light:
     id: led_matrix_light
     name: "Led matrix"
     internal: True
-    pin: GPIO13
+    pin: GPIO2
     num_leds: 64
     variant: WS2812
     type: GRB

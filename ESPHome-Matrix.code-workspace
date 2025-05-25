@@ -71,6 +71,6 @@
 			"*.bak": "cpp",
 			"chrono": "cpp"
 		},
-		"workbench.colorTheme": "Visual Studio Light"
+		"workbench.colorTheme": "Default Dark Modern"
 	}
 }

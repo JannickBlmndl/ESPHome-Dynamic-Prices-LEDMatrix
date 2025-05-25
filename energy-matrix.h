@@ -30,11 +30,17 @@ PriceCat_t priceCats[] = {
     // {EXPENSIVE, Color(0x808000), 0.30},     // Yellow
     // {VERY_EXPENSIVE, Color(0xFF0000), 0.40} // Red
     // 50% brightness
-    {VERY_CHEAP, Color(0x007F00), 0.00},  // Green (50% brightness)
-    {CHEAP, Color(0x2B5500), 0.10},         // Light Green (50% brightness)
-    {NORMAL, Color(0x344600), 0.20},        // Yellowish Green (50% brightness)
-    {EXPENSIVE, Color(0x404000), 0.30},     // Yellow (50% brightness)
-    {VERY_EXPENSIVE, Color(0x7F0000), 0.40} // Red (50% brightness)
+    // {VERY_CHEAP, Color(0x007F00), 0.00},  // Green (50% brightness)
+    // {CHEAP, Color(0x2B5500), 0.10},         // Light Green (50% brightness)
+    // {NORMAL, Color(0x344600), 0.20},        // Yellowish Green (50% brightness)
+    // {EXPENSIVE, Color(0x404000), 0.30},     // Yellow (50% brightness)
+    // {VERY_EXPENSIVE, Color(0x7F0000), 0.40} // Red (50% brightness)
+    // 25% brightness
+    {VERY_CHEAP, Color(0x003F00), 0.00},    // Green (25% brightness)
+    {CHEAP, Color(0x155500), 0.10},         // Light Green (25% brightness)
+    {NORMAL, Color(0x1A2300), 0.20},        // Yellowish Green (25% brightness)
+    {EXPENSIVE, Color(0x202000), 0.30},     // Yellow (25% brightness)
+    {VERY_EXPENSIVE, Color(0x3F0000), 0.40} // Red (25% brightness)
 };
 
 // Global variables
