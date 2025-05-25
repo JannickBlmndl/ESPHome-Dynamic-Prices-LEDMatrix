@@ -83,7 +83,7 @@ light:
     id: led_matrix_light
     name: "Led matrix"
     internal: True
-    pin: GPIO13
+    pin: GPIO2
     num_leds: 64
     variant: WS2812
     type: GRB
@@ -118,4 +118,13 @@ display:
           energyMatrix.drawPriceMatrix(&it);
     
 captive_portal:
-    
+
+number:
+  - platform: template
+    name: "Matrix Brightness"
+    id: display_brightness
+    min_value: 0
+    max_value: 100
+    initial_value: 20
+    step: 1
+    optimistic: true
