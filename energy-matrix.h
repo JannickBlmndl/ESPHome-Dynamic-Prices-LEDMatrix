@@ -24,24 +24,15 @@ struct PriceCat_t
 // Prices category, colors and lower boundary
 PriceCat_t priceCats[] = {
     // 100 % brightness
-    // {VERY_CHEAP, Color(0x00FF00), 0.00},    // Green
-    // {CHEAP, Color(0x55AA00), 0.10},         // Light Green
-    // {NORMAL, Color(0x698C00), 0.20},        // Yellowish Green
-    // {EXPENSIVE, Color(0x808000), 0.30},     // Yellow
-    // {VERY_EXPENSIVE, Color(0xFF0000), 0.40} // Red
-    // 50% brightness
-    // {VERY_CHEAP, Color(0x007F00), 0.00},  // Green (50% brightness)
-    // {CHEAP, Color(0x2B5500), 0.10},         // Light Green (50% brightness)
-    // {NORMAL, Color(0x344600), 0.20},        // Yellowish Green (50% brightness)
-    // {EXPENSIVE, Color(0x404000), 0.30},     // Yellow (50% brightness)
-    // {VERY_EXPENSIVE, Color(0x7F0000), 0.40} // Red (50% brightness)
-    // 25% brightness
-    {VERY_CHEAP, Color(0x003F00), 0.00},    // Green (25% brightness)
-    {CHEAP, Color(0x155500), 0.10},         // Light Green (25% brightness)
-    {NORMAL, Color(0x1A2300), 0.20},        // Yellowish Green (25% brightness)
-    {EXPENSIVE, Color(0x202000), 0.30},     // Yellow (25% brightness)
-    {VERY_EXPENSIVE, Color(0x3F0000), 0.40} // Red (25% brightness)
+    {VERY_CHEAP, Color(0x00FF00), 0.00},    // Green
+    {CHEAP, Color(0x55AA00), 0.10},         // Light Green
+    {NORMAL, Color(0x698C00), 0.20},        // Yellowish Green
+    {EXPENSIVE, Color(0xFFFF00), 0.30},     // Yellow
+    {VERY_EXPENSIVE, Color(0xFF0000), 0.40} // Red
 };
+
+// Negative prices
+Color colourNegative = Color(0x800080);
 
 // Global variables
 double currentPrice;
@@ -79,7 +70,7 @@ public:
     if (!isnan(price) || price == 0.0)
     {
       minPrice = price;
-      ESP_LOGD("SetMinPrice", "Min set to: %.2f", minPrice);
+      // ESP_LOGD("SetMinPrice", "Min set to: %.2f", minPrice);
     }
   }
 
@@ -88,7 +79,7 @@ public:
     if (!isnan(price) || price == 0.0)
     {
       maxPrice = price;
-      ESP_LOGD("SetMaxPrice", "Max set to: %.2f", maxPrice);
+      // ESP_LOGD("SetMaxPrice", "Max set to: %.2f", maxPrice);
     }
   }
 
@@ -109,6 +100,8 @@ public:
     int currentHour = 0;
     int tmpHour;
     bool dayFlag = false; // include data of tommorow
+
+    Color barColor = COLOR_OFF;
 
     // Get current hour from Home Assistant time
     if (id(homeassistant_time).now().is_valid())
@@ -150,10 +143,14 @@ public:
         if (height > 8) // Constrain height to matrix bounds
           height = 8;
 
-        ESP_LOGD("drawPrice", "i: %d, hour: %d, price: %.2f, Height: %d, dayFlag: %d", i,
-                 tmpHour % 24, price, height, dayFlag);
+        ESP_LOGD("drawPrice", "hour: %d, price: %.2f, Height: %d, dayFlag: %d", tmpHour % 24, price,
+                 height, dayFlag);
+
+        barColor = getPriceColour(price); // get price bar color
+        barColor = getScaled(barColor); // scale with brightness
+
         // Draw
-        drawMatrixLine(buff, i, height, getPriceColour(price));
+        drawMatrixLine(buff, i, height, barColor);
       }
     }
   }
@@ -225,7 +222,7 @@ public:
           // Extract and convert the price value
           priceStr = objectStr.substring(valueStart, valueEnd);
           targetArray[i] = priceStr.toFloat(); //
-          ESP_LOGD("SetPrices", "Extracted price[%d]: %.2f", i, targetArray[i]);
+          // ESP_LOGD("SetPrices", "Extracted price[%d]: %.2f", i, targetArray[i]);
           i++;
         }
       }
@@ -264,11 +261,14 @@ private:
   Color getPriceColour(double price)
   {
     const int numOfCats = sizeof(priceCats) / sizeof(priceCats[0]);
+    
+    if (price < 0.0)
+    {
+      // negative prices
+      return colourNegative;
+    }
 
-    if(price < 0.0) // Negative price
-      return priceCats[VERY_CHEAP].color;
-
-    for (int i = 0; i < numOfCats; i++)
+    for (int i = 0; i < numOfCats - 1; i++)
     {
       // If it's the last category, check if the price is above the lower limit
       if (i == numOfCats - 1)
@@ -286,8 +286,31 @@ private:
     }
     // Log a warning if no matching color is found
     ESP_LOGD("EnergyMatrix", "No color matching with price: %f", price);
-    
-    return COLOR_OFF; // LEdMatrix Off if no match found
+
+    return COLOR_OFF; // LedMatrix Off if no match found
   }
 
+  /// @brief scale color with brightness number
+  /// @param col 
+  /// @return 
+  Color getScaled(Color col = COLOR_OFF)
+  {
+    Color scaledCol;
+    float brightness = 1.0f;
+  
+    if (id(display_brightness).has_state())
+    {
+      brightness = id(display_brightness).state / 100.0f;
+      if (brightness < 0.0f) brightness = 0.0f;
+      if (brightness > 1.0f) brightness = 1.0f;
+    }
+  
+    scaledCol.r = (uint8_t)(col.r * brightness);
+    scaledCol.g = (uint8_t)(col.g * brightness);
+    scaledCol.b = (uint8_t)(col.b * brightness);
+    scaledCol.w = 0;
+
+    return scaledCol;
+  }
+  
 }; // class

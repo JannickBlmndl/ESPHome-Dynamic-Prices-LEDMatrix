@@ -69,7 +69,8 @@
 			"ostream": "cpp",
 			"sstream": "cpp",
 			"*.bak": "cpp",
-			"chrono": "cpp"
+			"chrono": "cpp",
+			"random": "cpp"
 		},
 		"workbench.colorTheme": "Default Dark Modern"
 	}

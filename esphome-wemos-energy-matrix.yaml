@@ -107,15 +107,33 @@ display:
           energyMatrix.SetMaxPrice(id(entso_max).state);
           energyMatrix.SetTodaysPrices(id(entso_today).state.c_str());
           energyMatrix.SetTomorrowsPrices(id(entso_tomorrow).state.c_str());
-
+  
           energyMatrix.SetPrices("today");
           energyMatrix.SetPrices("tomorrow");
       
           // Clear screen
           it.fill(COLOR_OFF); 
-          
+          // energyMatrix.testRectangle(&it, 2, 2, 3, 3);
           // Draw price matrix
           energyMatrix.drawPriceMatrix(&it);
     
 captive_portal:
-    
+
+number:
+  - platform: template
+    name: "Matrix Brightness"
+    id: display_brightness
+    unit_of_measurement: "%"
+    min_value: 0
+    max_value: 100
+    initial_value: 20
+    step: 1
+    optimistic: true
+    restore_value: true
+    mode: slider
+
+button:
+  - platform: restart
+    id: restart_internal
+    entity_category: config
+    internal: true
