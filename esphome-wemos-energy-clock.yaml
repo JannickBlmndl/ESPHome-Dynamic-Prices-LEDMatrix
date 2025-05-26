@@ -82,11 +82,10 @@ light:
     id: led_ring_light
     name: "Led ring"
     internal: True
-    pin: GPIO2
+    pin: GPIO14
     num_leds: 12
     variant: WS2812
-    type: GRB
-
+    type: RGB
     
 # 12x CJMCU2812 WS2812B Addressable Light Display
 display:
@@ -97,9 +96,9 @@ display:
     height: 1
     # rotation: ${sub_rotation}
     update_interval: ${sub_update_interval}
-    # pixel_mapper: |-
-    #   // Remap pixels for LR chronological order price bars on the CJMCU-64
-    #   return (7 - x) + (y * 8);
+    pixel_mapper: |-
+      // Map x (0-11) to clockwise order
+      return (12 - x) % 12;
     lambda: |-
           static EnergyClock energyClock;  
           energyClock.SetCurrentPrice(id(price_now).state);
@@ -113,9 +112,13 @@ display:
       
           // Clear screen
           it.fill(COLOR_OFF); 
-          
+
+          //
+          energyClock.testPixel(&it, 4);
+          energyClock.testPixel(&it, 5);
+
           // Draw price matrix
-          energyClock.drawPriceMatrix(&it);
+          energyClock.drawPriceClock(&it);
     
 captive_portal:
 

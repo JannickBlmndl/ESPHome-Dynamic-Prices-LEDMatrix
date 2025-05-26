@@ -82,6 +82,15 @@ public:
 
   void SetTomorrowsPrices(String prices) { TomorrowsPrices = prices; }
 
+  void testPixel(display::Display *buff, int y)
+  {
+    Color pixelColor;
+
+    // Test rectangle with color matching price category VERY_EXPENSIVE (RED)
+    pixelColor = getPriceColour(priceCats[VERY_EXPENSIVE].lowLim);
+    buff->draw_pixel_at(0, y, pixelColor);
+  }
+
   // 12 neopixel ring
   void drawPriceClock(display::Display *buff)
   {
@@ -104,12 +113,11 @@ public:
 
       price = priceArray[hour]; // Get price for thisHour
 
-      ESP_LOGD("drawPriceRing", "i: %d, hour: %d, price: %.2f, Height: %d, dayFlag: %d", i, hour,
-               price);
+      ESP_LOGD("drawPriceRing", "i: %d, hour: %d, price: %.2f", i, hour, price);
 
       pixelColor = getPriceColour(price); // get price bar color
-      pixelColor = getScaled(barColor); // scale with brightness
-            // draw pixel
+      pixelColor = getScaled(pixelColor); // scale with brightness
+      // draw pixel
       buff->draw_pixel_at(i, y, pixelColor);
     }
   }
@@ -216,7 +224,7 @@ private:
       return colourNegative;
     }
 
-    for (int i = 0; i < numOfCats - 1; i++)
+    for (int i = 0; i < numOfCats; i++)
     {
       // If it's the last category, check if the price is above the lower limit
       if (i == numOfCats - 1)
@@ -233,9 +241,9 @@ private:
       }
     }
     // Log a warning if no matching color is found
-    ESP_LOGD("EnergyMatrix", "No color matching with price: %f", price);
+    ESP_LOGD("EnergyClock", "No color matching with price: %f", price);
 
-    return COLOR_OFF; // LedMatrix Off if no match found
+    return COLOR_OFF; // LedClock Off if no match found
   }
 
   /// @brief scale color with brightness number
