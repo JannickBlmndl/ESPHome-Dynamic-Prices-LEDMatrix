@@ -3,7 +3,7 @@ substitutions:
   device_name:  "esphome-wemos-energy-matrix"
   # Configuration
   sub_timezone: "Europe/Amsterdam" # Set your time zone
-  sub_update_interval: 60s
+  sub_update_interval: 10s
   sub_rotation: 0° # Display rotation
 esphome:
   name: ${device_name}
@@ -113,6 +113,8 @@ display:
       
           // Clear screen
           it.fill(COLOR_OFF); 
+          //energyMatrix.testRectangle(&it, 2, 2, 4, 4);
+          
           // Draw price matrix
           energyMatrix.drawPriceMatrix(&it);
     

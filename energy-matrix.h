@@ -268,21 +268,17 @@ private:
       return colourNegative;
     }
 
-    for (int i = 0; i < numOfCats - 1; i++)
+    for (int i = 0; i < numOfCats ; i++)
     {
       // If it's the last category, check if the price is above the lower limit
       if (i == numOfCats - 1)
       {
         if (price >= priceCats[i].lowLim)
-        {
           return priceCats[i].color;
-        }
       }
       // For other categories, check if the price is within the range
       else if (price >= priceCats[i].lowLim && price < priceCats[i + 1].lowLim)
-      {
         return priceCats[i].color;
-      }
     }
     // Log a warning if no matching color is found
     ESP_LOGD("EnergyMatrix", "No color matching with price: %f", price);
