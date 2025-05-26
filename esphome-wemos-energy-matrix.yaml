@@ -83,7 +83,7 @@ light:
     id: led_matrix_light
     name: "Led matrix"
     internal: True
-    pin: GPIO2
+    pin: GPIO13
     num_leds: 64
     variant: WS2812
     type: GRB
@@ -113,7 +113,6 @@ display:
       
           // Clear screen
           it.fill(COLOR_OFF); 
-          // energyMatrix.testRectangle(&it, 2, 2, 3, 3);
           // Draw price matrix
           energyMatrix.drawPriceMatrix(&it);
     
