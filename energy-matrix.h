@@ -6,6 +6,7 @@
 // Define the PRICE_CAT enum
 enum PRICE_CAT
 {
+  NEGATIVE,
   VERY_CHEAP,
   CHEAP,
   NORMAL,
@@ -21,18 +22,15 @@ struct PriceCat_t
   double lowLim;
 };
 
-// Prices category, colors and lower boundary
+// Prices category, colors and lower boundary, 100 % brightness
 PriceCat_t priceCats[] = {
-    // 100 % brightness
-    {VERY_CHEAP, Color(0x00FF00), 0.00},    // Green
-    {CHEAP, Color(0x55AA00), 0.10},         // Light Green
-    {NORMAL, Color(0x698C00), 0.20},        // Yellowish Green
-    {EXPENSIVE, Color(0xFFFF00), 0.30},     // Yellow
-    {VERY_EXPENSIVE, Color(0xFF0000), 0.40} // Red
+  {NEGATIVE, Color(0x800080), -100.0}, // Purple negative
+  {VERY_CHEAP, Color(0x00FF00), 0.00}, // Green
+  {CHEAP, Color(0x55AA00), 0.05}, // Light Green
+  {NORMAL, Color(0x698C00), 0.10}, // Yellowish Green
+  {EXPENSIVE, Color(0xFFFF00), 0.20}, // Yellow
+  {VERY_EXPENSIVE, Color(0xFF0000), 0.30} // Red
 };
-
-// Negative prices
-Color colourNegative = Color(0x800080);
 
 // Global variables
 double currentPrice;
@@ -143,12 +141,11 @@ public:
         if (height > 8) // Constrain height to matrix bounds
           height = 8;
 
-        ESP_LOGD("drawPrice", "hour: %d, price: %.2f, Height: %d, dayFlag: %d", tmpHour % 24, price,
-                 height, dayFlag);
-
         barColor = getPriceColour(price); // get price bar color
         barColor = getScaled(barColor); // scale with brightness
 
+        ESP_LOGD("drawPrice", "hour: %d, price: %.2f, Height: %d,Color: R:%d G:%d B:%d, dayFlag: %d", tmpHour % 24, price,
+                 height, barColor.r, barColor.g, barColor.b, dayFlag);
         // Draw
         drawMatrixLine(buff, i, height, barColor);
       }
@@ -261,28 +258,35 @@ private:
   Color getPriceColour(double price)
   {
     const int numOfCats = sizeof(priceCats) / sizeof(priceCats[0]);
-    
-    if (price < 0.0)
-    {
-      // negative prices
-      return colourNegative;
+
+    // If price is negative, always use the NEGATIVE entry (first in array)
+    if (price < 0.0) {
+      // ESP_LOGD("EnergyMatrix", "Negative price: %f, using NEGATIVE color: R:%d G:%d B:%d", price, priceCats[0].color.r, priceCats[0].color.g, priceCats[0].color.b);
+      return priceCats[NEGATIVE].color;
     }
 
-    for (int i = 0; i < numOfCats ; i++)
+    // For non-negative prices, iterate from the second entry
+    for (int i = 1; i < numOfCats; i++)
     {
       // If it's the last category, check if the price is above the lower limit
       if (i == numOfCats - 1)
       {
         if (price >= priceCats[i].lowLim)
+        {
+          // ESP_LOGD("EnergyMatrix", "Price: %f, matched category %d (last), color: R:%d G:%d
+          // B:%d", price, i, priceCats[i].color.r, priceCats[i].color.g, priceCats[i].color.b);
           return priceCats[i].color;
+        }
       }
-      // For other categories, check if the price is within the range
       else if (price >= priceCats[i].lowLim && price < priceCats[i + 1].lowLim)
+      {
+        // ESP_LOGD("EnergyMatrix", "Price: %f, matched category %d, color: R:%d G:%d B:%d", price,
+        // i, priceCats[i].color.r, priceCats[i].color.g, priceCats[i].color.b);
         return priceCats[i].color;
+      }
     }
     // Log a warning if no matching color is found
     ESP_LOGD("EnergyMatrix", "No color matching with price: %f", price);
-
     return COLOR_OFF; // LedMatrix Off if no match found
   }
 
