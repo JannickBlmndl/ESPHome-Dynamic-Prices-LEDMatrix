@@ -305,10 +305,15 @@ private:
       if (brightness > 1.0f) brightness = 1.0f;
     }
   
-    scaledCol.r = (uint8_t)(col.r * brightness);
-    scaledCol.g = (uint8_t)(col.g * brightness);
-    scaledCol.b = (uint8_t)(col.b * brightness);
-    scaledCol.w = 0;
+    if(brightness <= 0.0f) // Turn off all LEDs
+      scaledCol = COLOR_OFF;
+    else 
+    {
+      scaledCol.r = (uint8_t)(col.r * brightness);
+      scaledCol.g = (uint8_t)(col.g * brightness);
+      scaledCol.b = (uint8_t)(col.b * brightness);
+      scaledCol.w = 0;
+    }
 
     return scaledCol;
   }
